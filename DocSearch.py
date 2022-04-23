@@ -1,6 +1,8 @@
 from fileinput import lineno
 from os.path import exists
 import sys, re
+import numpy as np
+import math
 
 def read_file_path():
     file_path = input("What is the path of the file?: ")
@@ -9,7 +11,6 @@ def read_file_path():
 def read_files(file_path):
     file = []
     queries = []
-    print(f"{file_path}/docs.txt")
     if exists(f"{file_path}/docs.txt"):
         f = open(f"{file_path}/docs.txt", "r")
     else:
@@ -21,7 +22,7 @@ def read_files(file_path):
         sys.exit("That directory or the queries.txt file does not exist.")
 
     for line in f:
-        file.append([s.strip() for s in re.split(" |\t", line)])
+        file.append([s.strip() for s in re.split(" |\t", line.strip())])
 
     for line in q:
         queries.append([s.strip() for s in line.split(" ")])
@@ -39,12 +40,18 @@ def make_dict(file):
                 pass
             else: 
                 dict[word] = [0] * len(file)
-
             dict[word][i] += 1
     return dict
 
 def print_no_words(dict):
     print(f"Words in dictionary: {len(dict)}")
+
+def calc_angle(x, y):
+    norm_x = np.linalg.norm(x)
+    norm_y = np.linalg.norm(y)
+    cos_theta = np.dot(x, y) / (norm_x * norm_y)
+    theta = math.degrees(math.acos(cos_theta))
+    return theta
 
 def print_query_details(dict, query, no_documents):
     print(f"Query: {' '.join(query)}")
@@ -63,7 +70,23 @@ def print_query_details(dict, query, no_documents):
                 if (i + 1) in relevant_docs:
                     relevant_docs.remove(i + 1)
     print(f"Relevant documents: {' '.join([str(s) for s in relevant_docs])}")
-    pass
+
+    document_array = []
+
+    for doc in relevant_docs:
+        x = []
+        y = []
+
+        for word in dict:
+            x.append(dict[word][doc - 1])
+            y.append(int(word in query))
+        
+        document_array.append([round(calc_angle(np.array(x), np.array(y)), 5), doc])
+    
+    document_array = sorted(document_array, key=lambda x: x[0])
+    
+    for doc in document_array:
+        print(f"{doc[1]} {doc[0]}")
 
 def main():
     # file, queries = read_files(read_file_path())
