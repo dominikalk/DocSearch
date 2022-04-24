@@ -1,28 +1,27 @@
-from fileinput import lineno
 from os.path import exists
-import sys, re
+import sys
 import numpy as np
 import math
 
-def read_file_path():
-    file_path = input("What is the path of the file?: ")
-    return file_path
-
-def read_files(file_path):
+def read_files():
+    """
+    Function that reads docs.txt and queries.txt from the current directory and 
+    returns a 2D array for both containing each word from each line.
+    """
     file = []
     queries = []
-    if exists(f"{file_path}/docs.txt"):
-        f = open(f"{file_path}/docs.txt", "r")
+    if exists("docs.txt"):
+        f = open("docs.txt", "r")
     else:
-        sys.exit("That directory or the docs.txt file does not exist.")
+        sys.exit("docs.txt file does not exist in this directore.")
 
-    if exists(f"{file_path}/queries.txt"):
-        q = open(f"{file_path}/queries.txt", "r")
+    if exists("queries.txt"):
+        q = open("queries.txt", "r")
     else:
-        sys.exit("That directory or the queries.txt file does not exist.")
+        sys.exit("queries.txt file does not exist in this directore.")
 
     for line in f:
-        file.append([s.strip() for s in re.split(" |\t", line.strip())])
+        file.append([s.strip() for s in line.strip().replace('\t', ' ').split(' ')])
 
     for line in q:
         queries.append([s.strip() for s in line.split(" ")])
@@ -33,27 +32,42 @@ def read_files(file_path):
     return file, queries
 
 def make_dict(file):
+    """
+    Takes a 2D array and returns an inverted index dictionary with the occurencies
+    of each word in each document.
+    """
     dict = {}
+
     for i, line in enumerate(file):
         for word in line:
-            if word in dict:
-                pass
-            else: 
-                dict[word] = [0] * len(file)
+            if not word in dict:
+                dict[word] = [0] * len(file)  
             dict[word][i] += 1
     return dict
 
 def print_no_words(dict):
+    """
+    Takes a dictionary and prints a string detailing the number of unique 
+    words in it.
+    """
     print(f"Words in dictionary: {len(dict)}")
 
 def calc_angle(x, y):
+    """
+    Takes two vectors in the form of a numpy array and works out the angle between them.
+    """
     norm_x = np.linalg.norm(x)
     norm_y = np.linalg.norm(y)
     cos_theta = np.dot(x, y) / (norm_x * norm_y)
     theta = math.degrees(math.acos(cos_theta))
     return theta
 
-def print_query_details(dict, query, no_documents):
+def print_query_details(dict, tp, query, no_documents):
+    """
+    Takes a dictionary, query and the number of documents, and prints the query,
+    relevant documents to it, in order from least to most relevant the angle between
+    the document and query.
+    """
     print(f"Query: {' '.join(query)}")
 
     # Find query words that are actually in the file
@@ -71,30 +85,31 @@ def print_query_details(dict, query, no_documents):
                     relevant_docs.remove(i + 1)
     print(f"Relevant documents: {' '.join([str(s) for s in relevant_docs])}")
 
+    # Find angles for each relevant document
     document_array = []
-
     for doc in relevant_docs:
-        x = []
-        y = []
+        x = np.array(tp[doc - 1])
+        y = np.array([0] * len(dict))
 
-        for word in dict:
-            x.append(dict[word][doc - 1])
-            y.append(int(word in query))
+        for word in relevant_query:
+            if dict[word][doc - 1] != 0:
+                y[list(dict.keys()).index(word)] = 1
         
-        document_array.append([round(calc_angle(np.array(x), np.array(y)), 5), doc])
+        document_array.append([round(calc_angle(x, y), 5), doc])
     
     document_array = sorted(document_array, key=lambda x: x[0])
     
+    # Print ordered documents with their angles
     for doc in document_array:
         print(f"{doc[1]} {doc[0]}")
 
 def main():
-    # file, queries = read_files(read_file_path())
-    file, queries = read_files("testCases/set2")
+    file, queries = read_files()
     dict = make_dict(file)
     print_no_words(dict)
+    tp = np.transpose(list(dict.values()))
     for query in queries:
-        print_query_details(dict, query, len(file))
+        print_query_details(dict, tp, query, len(file))
 
 if __name__ == "__main__":
     main()
