@@ -76,18 +76,24 @@ def print_query_details(dict, tp, query, no_documents):
         if word in dict:
             relevant_query.append(word)
 
+    if len(relevant_query) == 0:
+        return print("No relevant documents.")
+
     # Find relevant documents
-    relevant_docs = list(range(1, no_documents + 1))
-    for word in relevant_query:
-        for i in range(0, no_documents):
+    list_of_document_IDs = []
+    for i in range(no_documents):
+        contains_all = True
+        for word in relevant_query:
             if dict[word][i] == 0:
-                if (i + 1) in relevant_docs:
-                    relevant_docs.remove(i + 1)
-    print(f"Relevant documents: {' '.join([str(s) for s in relevant_docs])}")
+                contains_all = False
+                break
+        if contains_all == True:
+            list_of_document_IDs.append(i + 1)
+    print(f"Relevant documents: {' '.join([str(s) for s in list_of_document_IDs])}")
 
     # Find angles for each relevant document
     document_array = []
-    for doc in relevant_docs:
+    for doc in list_of_document_IDs:
         x = np.array(tp[doc - 1])
         y = np.array([0] * len(dict))
 
