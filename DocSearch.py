@@ -76,9 +76,6 @@ def print_query_details(dict, tp, query, no_documents):
         if word in dict:
             relevant_query.append(word)
 
-    if len(relevant_query) == 0:
-        return print("No relevant documents.")
-
     # Find relevant documents
     list_of_document_IDs = []
     for i in range(no_documents):
@@ -87,7 +84,7 @@ def print_query_details(dict, tp, query, no_documents):
             if dict[word][i] == 0:
                 contains_all = False
                 break
-        if contains_all == True:
+        if contains_all == True and len(relevant_query) != 0:
             list_of_document_IDs.append(i + 1)
     print(f"Relevant documents: {' '.join([str(s) for s in list_of_document_IDs])}")
 
